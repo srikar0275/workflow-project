@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/prepare-dev.mjs && next dev --webpack",
-    "dev:turbo": "node scripts/prepare-dev.mjs && next dev",
+    "dev:turbo": "node scripts/prepare-dev.mjs --turbo && next dev",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:setup": "prisma db push && tsx prisma/seed.ts",
+    "db:setup": "prisma db push && prisma generate && tsx prisma/seed.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

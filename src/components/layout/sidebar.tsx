@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
+  DollarSign,
   FolderKanban,
   Home,
   LayoutDashboard,
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/team", label: "Team", icon: Users },
+  { href: "/revenue", label: "Revenue", icon: DollarSign },
 ];
 
 export function Sidebar({ userName }: { userName: string }) {

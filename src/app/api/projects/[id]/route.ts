@@ -19,6 +19,7 @@ const updateSchema = z.object({
     .optional(),
   startDate: z.string().nullable().optional(),
   targetDate: z.string().nullable().optional(),
+  revenue: z.number().nonnegative().nullable().optional(),
 });
 
 export async function GET(

@@ -12,6 +12,7 @@ export default async function TeamPage() {
       email: true,
       role: true,
       devRole: true,
+      salary: true,
       _count: {
         select: {
           taskAssignments: true,
@@ -26,6 +27,7 @@ export default async function TeamPage() {
     <TeamView
       initialMembers={members}
       isAdmin={session?.user.role === "ADMIN"}
+      currentUserId={session?.user.id ?? ""}
     />
   );
 }

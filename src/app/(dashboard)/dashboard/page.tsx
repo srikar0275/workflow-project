@@ -113,7 +113,7 @@ export default async function DashboardPage() {
 
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-white">Projects Revenue</h2>
+          <h2 className="text-lg font-semibold text-white">Revenue</h2>
           <Link
             href="/projects"
             className="text-sm text-cyan-400 hover:text-cyan-300"
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Card className="border-emerald-900/40 bg-emerald-950/20">
             <CardContent className="flex items-center gap-4 pt-5">
               <div className="rounded-lg bg-emerald-950 p-3 text-emerald-400">
@@ -143,17 +143,6 @@ export default async function DashboardPage() {
                 {revenueProjects.length}
               </p>
               <p className="text-sm text-slate-400">Projects with revenue</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-5">
-              <p className="text-2xl font-bold text-white">
-                {revenueProjects.length > 0
-                  ? formatCurrency(totalRevenue / revenueProjects.length)
-                  : "—"}
-              </p>
-              <p className="text-sm text-slate-400">Average per project</p>
             </CardContent>
           </Card>
         </div>

@@ -60,6 +60,7 @@ model User {
   password  String
   role      UserRole @default(DEVELOPER)
   devRole   DevRole?
+  salary    Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -80,9 +81,23 @@ model Project {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  members    ProjectMember[]
-  stages     Stage[]
-  activities ActivityLog[]
+  members        ProjectMember[]
+  stages         Stage[]
+  activities     ActivityLog[]
+  revenueSources RevenueSource[]
+}
+
+model RevenueSource {
+  id        String   @id @default(cuid())
+  projectId String?
+  name      String
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }
 
 model ProjectMember {

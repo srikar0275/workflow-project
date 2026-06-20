@@ -17,6 +17,7 @@ export async function GET() {
       email: true,
       role: true,
       devRole: true,
+      salary: true,
       createdAt: true,
       _count: {
         select: {
@@ -37,6 +38,7 @@ const createSchema = z.object({
   password: z.string().min(6),
   role: z.enum(["ADMIN", "PROJECT_MANAGER", "DEVELOPER", "VIEWER"]).optional(),
   devRole: z.enum(["APP", "BACKEND", "FRONTEND", "AI", "DEVOPS"]).optional(),
+  salary: z.number().nonnegative().optional(),
 });
 
 export async function POST(request: Request) {
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
       password: await hash(parsed.data.password, 10),
       role: parsed.data.role ?? "DEVELOPER",
       devRole: parsed.data.devRole,
+      salary: parsed.data.salary,
     },
     select: {
       id: true,
@@ -72,6 +75,7 @@ export async function POST(request: Request) {
       email: true,
       role: true,
       devRole: true,
+      salary: true,
     },
   });
 
