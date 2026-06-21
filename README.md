@@ -17,7 +17,7 @@ Internal project workflow management platform for Ritora Technologies. Track pro
 - Next.js 16 (App Router)
 - TypeScript
 - Tailwind CSS
-- Prisma ORM + SQLite (local) — swap to PostgreSQL for production
+- Prisma ORM + PostgreSQL
 - NextAuth.js (credentials)
 
 ## Quick start
@@ -77,28 +77,42 @@ npm run dev
 
 ## Environment variables
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` to `.env` and set a PostgreSQL URL (free tier at [neon.tech](https://neon.tech)):
 
 ```
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require"
 AUTH_SECRET="your-random-secret"
-NEXTAUTH_URL="http://localhost:3000"
+AUTH_URL="http://localhost:3000"
 ```
 
-Generate a secret: `openssl rand -base64 32`
+Generate a secret (Windows PowerShell):
 
-## Production (PostgreSQL)
-
-Update `prisma/schema.prisma`:
-
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+```powershell
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-Then run `npx prisma migrate dev` with your PostgreSQL connection string.
+### Deploy on Vercel
+
+1. Create a PostgreSQL database ([Neon](https://neon.tech) recommended).
+2. In **Vercel → Settings → Environment Variables**, add:
+
+| Variable | Value |
+|----------|--------|
+| `AUTH_SECRET` | Output from the Node command above |
+| `AUTH_URL` | `https://workflow-project-ten.vercel.app` |
+| `DATABASE_URL` | Your PostgreSQL connection string |
+
+3. Push this repo and redeploy (build runs `prisma migrate deploy` automatically).
+4. Seed production once from your machine:
+
+```powershell
+$env:DATABASE_URL="postgresql://..."
+npm run setup:production
+```
+
+5. Sign in at your Vercel URL with `admin@ritora.tech` / `admin123`.
+
+Redeploy after changing env vars. Check **Runtime Logs** if auth still fails.
 
 ## Project structure
 

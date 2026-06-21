@@ -5,7 +5,6 @@ import { spawnSync } from "node:child_process";
 const projectRoot = process.cwd();
 const isTurbo = process.argv.includes("--turbo");
 const shouldClean = process.argv.includes("--clean");
-const dbPath = path.join(projectRoot, "prisma", "dev.db");
 const schemaPath = path.join(projectRoot, "prisma", "schema.prisma");
 const clientPath = path.join(
   projectRoot,
@@ -51,13 +50,7 @@ function removeDir(target, label) {
   }
 }
 
-if (!fs.existsSync(dbPath)) {
-  console.log("\nDatabase not found. Running db:setup...\n");
-  const result = runNpmScript("db:setup");
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
-} else if (needsPrismaGenerate()) {
+if (needsPrismaGenerate()) {
   const generate = runPrismaGenerate();
   if (generate.status !== 0) {
     console.warn(

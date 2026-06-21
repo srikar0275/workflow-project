@@ -8,13 +8,16 @@
     "dev:turbo": "node scripts/prepare-dev.mjs --turbo && next dev",
     "preview": "npm run build && npm run start",
     "build": "next build --webpack",
+    "vercel-build": "prisma migrate deploy && prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:setup": "prisma db push && prisma generate && tsx prisma/seed.ts",
+    "db:setup": "prisma migrate deploy && prisma generate && tsx prisma/seed.ts",
+    "db:setup:local": "prisma db push && prisma generate && tsx prisma/seed.ts",
+    "setup:production": "node scripts/setup-production.mjs",
     "postinstall": "prisma generate"
   },
   "prisma": {
