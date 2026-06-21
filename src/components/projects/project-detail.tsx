@@ -142,7 +142,7 @@ export function ProjectDetail({ project, users }: { project: Project; users: Use
         <TeamManager
           projectId={project.id}
           members={localMembers}
-          users={users}
+          availableUsers={users}
           onMembersChange={setLocalMembers}
         />
 

@@ -31,3 +31,19 @@ export function getInitials(name: string): string {
     .toUpperCase()
     .slice(0, 2);
 }
+
+export function isIsoDateInput(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
+}
+
+export function isTargetDateBeforeStart(
+  startDate: string | undefined | null,
+  targetDate: string | undefined | null,
+): boolean {
+  const start = startDate?.trim();
+  const target = targetDate?.trim();
+  if (!start || !target || !isIsoDateInput(start) || !isIsoDateInput(target)) {
+    return false;
+  }
+  return target < start;
+}

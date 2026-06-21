@@ -20,6 +20,7 @@ const updateSchema = z.object({
   startDate: z.string().nullable().optional(),
   targetDate: z.string().nullable().optional(),
   revenue: z.number().nonnegative().nullable().optional(),
+  revenueDate: z.string().nullable().optional(),
 });
 
 export async function GET(
@@ -79,25 +80,45 @@ export async function PATCH(
   }
 
   const data = parsed.data;
+  const { revenueDate, ...projectData } = data;
+
   const project = await prisma.project.update({
     where: { id },
     data: {
-      ...data,
+      ...projectData,
       startDate:
-        data.startDate === null
+        projectData.startDate === null
           ? null
-          : data.startDate
-            ? new Date(data.startDate)
+          : projectData.startDate
+            ? new Date(projectData.startDate)
             : undefined,
       targetDate:
-        data.targetDate === null
+        projectData.targetDate === null
           ? null
-          : data.targetDate
-            ? new Date(data.targetDate)
+          : projectData.targetDate
+            ? new Date(projectData.targetDate)
             : undefined,
     },
     include: { stages: true },
   });
+
+  if (revenueDate !== undefined) {
+    const now = new Date().toISOString();
+    await prisma.$executeRawUnsafe(
+      `UPDATE Project SET revenueDate = ?, updatedAt = ? WHERE id = ?`,
+      revenueDate,
+      now,
+      id,
+    );
+  }
+
+  const revenueDateRows = await prisma.$queryRawUnsafe<
+    { revenueDate: string | null; updatedAt: string }[]
+  >(
+    `SELECT revenueDate, updatedAt FROM Project WHERE id = ? LIMIT 1`,
+    id,
+  );
+  const financeFields = revenueDateRows[0];
 
   await logActivity(
     session.user.id,
@@ -106,7 +127,11 @@ export async function PATCH(
     project.id,
   );
 
-  return NextResponse.json(project);
+  return NextResponse.json({
+    ...project,
+    revenueDate: financeFields?.revenueDate ?? null,
+    updatedAt: financeFields?.updatedAt ?? project.updatedAt,
+  });
 }
 
 export async function DELETE(

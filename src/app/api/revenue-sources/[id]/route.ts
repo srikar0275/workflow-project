@@ -9,9 +9,23 @@ import { logActivity } from "@/lib/sync-status";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+const optionalText = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((value) => {
+    if (value === undefined) return undefined;
+    const trimmed = value?.trim();
+    return trimmed ? trimmed : null;
+  });
+
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
   amount: z.number().nonnegative().optional(),
+  category: optionalText,
+  description: optionalText,
+  receivedDate: optionalText,
+  notes: optionalText,
 });
 
 export async function PATCH(

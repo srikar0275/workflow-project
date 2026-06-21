@@ -37,8 +37,8 @@ const createSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   role: z.enum(["ADMIN", "PROJECT_MANAGER", "DEVELOPER", "VIEWER"]).optional(),
-  devRole: z.enum(["APP", "BACKEND", "FRONTEND", "AI", "DEVOPS"]).optional(),
-  salary: z.number().nonnegative().optional(),
+  devRole: z.enum(["APP", "BACKEND", "FRONTEND", "AI", "DEVOPS"]).nullable().optional(),
+  salary: z.number().nonnegative().nullable().optional(),
 });
 
 export async function POST(request: Request) {

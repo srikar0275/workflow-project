@@ -1,15 +1,9 @@
-import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
-
-const ProjectDetail = dynamic(
-  () =>
-    import("@/components/projects/project-detail").then((m) => m.ProjectDetail),
-  { loading: () => <PageSkeleton title={false} /> },
-);
+import { getCachedUserDirectory } from "@/lib/cached-queries";
+import { ProjectDetail } from "@/components/projects/project-detail";
 
 export default async function ProjectPage({
   params,
@@ -41,10 +35,7 @@ export default async function ProjectPage({
         },
       },
     }),
-    prisma.user.findMany({
-      select: { id: true, name: true, email: true, devRole: true },
-      orderBy: { name: "asc" },
-    }),
+    getCachedUserDirectory(),
   ]);
 
   if (!project) notFound();

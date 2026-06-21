@@ -26,14 +26,14 @@ export type MemberItem = {
 type TeamManagerProps = {
   projectId: string;
   members: MemberItem[];
-  users: User[];
+  availableUsers: User[];
   onMembersChange: (members: MemberItem[]) => void;
 };
 
 export function TeamManager({
   projectId,
   members,
-  users,
+  availableUsers,
   onMembersChange,
 }: TeamManagerProps) {
   const [localMembers, setLocalMembers] = useState(members);
@@ -45,21 +45,29 @@ export function TeamManager({
   const [editTitle, setEditTitle] = useState("");
   const [editRole, setEditRole] = useState<UserRole>("DEVELOPER");
   const [saving, setSaving] = useState(false);
+  const [addError, setAddError] = useState("");
 
   useEffect(() => {
     setLocalMembers(members);
   }, [members]);
 
-  const availableUsers = useMemo(
-    () => users.filter((u) => !localMembers.some((m) => m.user.id === u.id)),
-    [users, localMembers],
+  const availableToAdd = useMemo(
+    () =>
+      availableUsers.filter(
+        (user) => !localMembers.some((member) => member.user.id === user.id),
+      ),
+    [availableUsers, localMembers],
   );
 
   useEffect(() => {
-    if (availableUsers.length > 0 && !addUserId) {
-      setAddUserId(availableUsers[0].id);
+    if (availableToAdd.length === 0) {
+      setAddUserId("");
+      return;
     }
-  }, [availableUsers, addUserId]);
+    if (!availableToAdd.some((user) => user.id === addUserId)) {
+      setAddUserId(availableToAdd[0].id);
+    }
+  }, [availableToAdd, addUserId]);
 
   function updateMembers(next: MemberItem[]) {
     setLocalMembers(next);
@@ -81,22 +89,33 @@ export function TeamManager({
   function resetAddForm() {
     setAddTitle("");
     setAddRole("");
-    setAddUserId(availableUsers[0]?.id ?? "");
+    setAddError("");
+    setAddUserId(availableToAdd[0]?.id ?? "");
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!addUserId || !addTitle.trim() || !addRole) return;
-    setSaving(true);
+    setAddError("");
 
-    const user = users.find((u) => u.id === addUserId);
+    if (!addUserId || !addTitle.trim() || !addRole) {
+      setAddError("Select a member, enter a title, and choose a project role.");
+      return;
+    }
+
+    const user = availableUsers.find((candidate) => candidate.id === addUserId);
+    if (!user) {
+      setAddError("Selected member is no longer available.");
+      return;
+    }
+
+    setSaving(true);
     const tempId = `temp-member-${Date.now()}`;
     const title = addTitle.trim();
     const optimistic: MemberItem = {
       id: tempId,
       title,
       role: addRole,
-      user: user!,
+      user,
     };
 
     const previous = localMembers;
@@ -129,6 +148,16 @@ export function TeamManager({
       resetAddForm();
     } else {
       updateMembers(previous);
+      const data = await res.json().catch(() => null);
+      let message = "Failed to add member. Try again.";
+      if (typeof data?.error === "string") {
+        message = data.error;
+      } else if (data?.error === "User is already on this project team") {
+        message = data.error;
+      } else if (typeof data?.error === "object" && data.error !== null) {
+        message = "Please check member, title, and role.";
+      }
+      setAddError(message);
     }
   }
 
@@ -203,7 +232,7 @@ export function TeamManager({
               closeEdit();
               if (!showAddForm) resetAddForm();
             }}
-            disabled={availableUsers.length === 0 && !showAddForm}
+            disabled={availableToAdd.length === 0 && !showAddForm}
           >
             <Plus className="h-3.5 w-3.5" />
             Add member
@@ -230,15 +259,16 @@ export function TeamManager({
               <Select
                 value={addUserId}
                 onChange={(e) => setAddUserId(e.target.value)}
-                required
-                disabled={availableUsers.length === 0}
+                disabled={availableToAdd.length === 0}
               >
-                {availableUsers.length === 0 ? (
-                  <option value="">All users already on team</option>
+                {availableToAdd.length === 0 ? (
+                  <option value="">
+                    No team members available. Add people in Team first.
+                  </option>
                 ) : (
-                  availableUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
+                  availableToAdd.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
                     </option>
                   ))
                 )}
@@ -270,10 +300,16 @@ export function TeamManager({
                 ))}
               </Select>
             </div>
+            {addError && <p className="text-sm text-red-400">{addError}</p>}
             <Button
               type="submit"
               size="sm"
-              disabled={saving || !addUserId || !addTitle.trim() || !addRole}
+              disabled={
+                saving ||
+                !addUserId ||
+                !addTitle.trim() ||
+                !addRole
+              }
             >
               {saving ? "Adding..." : "Add to team"}
             </Button>

@@ -1,34 +1,41 @@
+import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
+import {
+  getCachedProjectOptions,
+  getCachedUserDirectory,
+} from "@/lib/cached-queries";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { TasksView } from "./tasks-view";
 
 export default async function TasksPage() {
   const [tasks, projects, users] = await Promise.all([
     prisma.task.findMany({
-      include: {
-        assignments: { include: { user: { select: { id: true, name: true } } } },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        priority: true,
+        dueDate: true,
+        updatedAt: true,
+        stageId: true,
         stage: {
-          include: {
+          select: {
+            id: true,
+            name: true,
             project: { select: { id: true, name: true } },
+          },
+        },
+        assignments: {
+          select: {
+            user: { select: { id: true, name: true } },
           },
         },
       },
       orderBy: { updatedAt: "desc" },
     }),
-    prisma.project.findMany({
-      select: {
-        id: true,
-        name: true,
-        stages: {
-          select: { id: true, name: true },
-          orderBy: { order: "asc" },
-        },
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.user.findMany({
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
+    getCachedProjectOptions(),
+    getCachedUserDirectory(),
   ]);
 
   const serialized = tasks.map((task) => ({
@@ -38,16 +45,19 @@ export default async function TasksPage() {
     status: task.status,
     priority: task.priority,
     dueDate: task.dueDate?.toISOString() ?? null,
+    updatedAt: task.updatedAt.toISOString(),
     stageId: task.stageId,
     stage: task.stage,
     assignments: task.assignments,
   }));
 
   return (
-    <TasksView
-      initialTasks={serialized}
-      projects={projects}
-      users={users}
-    />
+    <Suspense fallback={<PageSkeleton />}>
+      <TasksView
+        initialTasks={serialized}
+        projects={projects}
+        users={users}
+      />
+    </Suspense>
   );
 }

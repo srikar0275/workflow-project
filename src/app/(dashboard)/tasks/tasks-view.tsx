@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import type { TaskPriority, TaskStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export type TaskItem = {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: string | null;
+  updatedAt: string;
   stageId: string;
   stage: {
     id: string;
@@ -89,6 +91,8 @@ export function TasksView({
     }
   }, [addStages, addStageId]);
 
+  const searchParams = useSearchParams();
+
   function openEdit(task: TaskItem) {
     setEditingId(task.id);
     setEditTitle(task.title);
@@ -103,6 +107,13 @@ export function TasksView({
   function closeEdit() {
     setEditingId(null);
   }
+
+  useEffect(() => {
+    if (searchParams.get("add") === "task") {
+      setShowAddForm(true);
+      setEditingId(null);
+    }
+  }, [searchParams]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -121,6 +132,7 @@ export function TasksView({
       status: "NOT_STARTED",
       priority: addPriority,
       dueDate: addDueDate || null,
+      updatedAt: new Date().toISOString(),
       stageId: addStageId,
       stage: {
         id: addStageId,
@@ -168,6 +180,9 @@ export function TasksView({
                 dueDate: created.dueDate
                   ? new Date(created.dueDate).toISOString()
                   : null,
+                updatedAt: created.updatedAt
+                  ? new Date(created.updatedAt).toISOString()
+                  : new Date().toISOString(),
                 stageId: created.stageId,
                 stage: {
                   id: stageInfo?.id ?? addStageId,
@@ -273,6 +288,7 @@ export function TasksView({
           </p>
         </div>
         <Button
+          size="sm"
           variant="secondary"
           onClick={() => {
             setShowAddForm(!showAddForm);
@@ -394,7 +410,7 @@ export function TasksView({
       {tasks.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-slate-400">
-            No tasks yet. Add your first task above.
+            No tasks yet. Use Add task in the analysis section above.
           </CardContent>
         </Card>
       ) : (

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
 import type { DevRole, ProjectStatus, UserRole } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,15 @@ export function TeamView({
   const [editSalary, setEditSalary] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [addError, setAddError] = useState("");
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("add") === "member" && isAdmin) {
+      setShowForm(true);
+    }
+  }, [searchParams, isAdmin]);
 
   async function loadMember(memberId: string) {
     setDetailLoading(true);
@@ -195,18 +205,23 @@ export function TeamView({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setAddError("");
     setLoading(true);
-    const form = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+    const salary = parseSalary(form.get("salary"));
+    const devRole = form.get("devRole")?.toString().trim() ?? "";
+
     const res = await fetch("/api/team", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: form.get("name"),
-        email: form.get("email"),
-        password: form.get("password"),
-        role: form.get("role"),
-        devRole: form.get("devRole") || undefined,
-        salary: parseSalary(form.get("salary")),
+        name: form.get("name")?.toString().trim() ?? "",
+        email: form.get("email")?.toString().trim() ?? "",
+        password: form.get("password")?.toString() ?? "",
+        role: form.get("role")?.toString() || "DEVELOPER",
+        ...(devRole ? { devRole } : {}),
+        ...(salary != null ? { salary } : {}),
       }),
     });
     setLoading(false);
@@ -220,25 +235,42 @@ export function TeamView({
         },
       ]);
       setShowForm(false);
-      e.currentTarget.reset();
+      setAddError("");
+      formEl.reset();
+      return;
+    }
+
+    const data = await res.json().catch(() => null);
+    if (typeof data?.error === "string") {
+      setAddError(data.error);
+    } else if (typeof data?.error === "object" && data.error !== null) {
+      setAddError("Please check the member details and try again.");
+    } else {
+      setAddError("Could not add member. Please try again.");
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Team</h1>
           <p className="mt-1 text-slate-400">
             App, Backend, Frontend, AI & DevOps developers.
           </p>
         </div>
-        {isAdmin && (
-          <Button onClick={() => setShowForm(!showForm)}>
+        {isAdmin ? (
+          <Button
+            size="sm"
+            onClick={() => {
+              setShowForm(!showForm);
+              setAddError("");
+            }}
+          >
             <Plus className="h-4 w-4" />
             Add member
           </Button>
-        )}
+        ) : null}
       </div>
 
       {showForm && isAdmin && (
@@ -269,6 +301,9 @@ export function TeamView({
               <Button type="submit" disabled={loading} className="sm:col-span-2">
                 {loading ? "Adding..." : "Add member"}
               </Button>
+              {addError && (
+                <p className="text-sm text-red-400 sm:col-span-2">{addError}</p>
+              )}
             </form>
           </CardContent>
         </Card>

@@ -2,17 +2,26 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getWorkflowTemplate } from "@/lib/workflows";
 import { logActivity } from "@/lib/sync-status";
+import { isTargetDateBeforeStart } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const createSchema = z.object({
-  name: z.string().min(1),
-  client: z.string().optional(),
-  description: z.string().optional(),
-  templateId: z.string().default("full-stack-saas"),
-  startDate: z.string().optional(),
-  targetDate: z.string().optional(),
-});
+const createSchema = z
+  .object({
+    name: z.string().min(1),
+    client: z.string().optional(),
+    description: z.string().optional(),
+    templateId: z.string().default("full-stack-saas"),
+    startDate: z.string().optional(),
+    targetDate: z.string().optional(),
+  })
+  .refine(
+    (data) => !isTargetDateBeforeStart(data.startDate, data.targetDate),
+    {
+      message: "Target date must be on or after the start date.",
+      path: ["targetDate"],
+    },
+  );
 
 export async function GET() {
   const session = await auth();
@@ -40,7 +49,12 @@ export async function POST(request: Request) {
   const body = await request.json();
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const message =
+      fieldErrors.targetDate?.[0] ??
+      fieldErrors.name?.[0] ??
+      "Invalid project details.";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const { name, client, description, templateId, startDate, targetDate } =

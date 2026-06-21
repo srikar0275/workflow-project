@@ -26,7 +26,7 @@ export async function syncProjectStatus(projectId: string) {
   });
   if (!project) return;
 
-  const stages = await prisma.stage.findMany({ where: { projectId } });
+  const stages = project.stages;
   const newStatus = deriveProjectStatus(stages, project.status);
   if (newStatus !== project.status) {
     await prisma.project.update({

@@ -5,30 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectStatusBadge } from "@/components/ui/status-badge";
 import { Progress } from "@/components/ui/progress";
-import { calculateProgress } from "@/lib/status";
+import { getProjectStats, getProjectStatsMap } from "@/lib/project-stats";
 import { formatDate } from "@/lib/utils";
 
 export default async function ProjectsPage() {
-  const projects = await prisma.project.findMany({
-    select: {
-      id: true,
-      name: true,
-      client: true,
-      description: true,
-      status: true,
-      targetDate: true,
-      stages: {
-        select: {
-          tasks: { select: { status: true } },
-        },
+  const [projects, statsMap] = await Promise.all([
+    prisma.project.findMany({
+      select: {
+        id: true,
+        name: true,
+        client: true,
+        description: true,
+        status: true,
+        targetDate: true,
       },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+      orderBy: { updatedAt: "desc" },
+    }),
+    getProjectStatsMap(),
+  ]);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Projects</h1>
           <p className="mt-1 text-slate-400">
@@ -36,9 +34,9 @@ export default async function ProjectsPage() {
           </p>
         </div>
         <Link href="/projects/new">
-          <Button>
+          <Button size="sm">
             <Plus className="h-4 w-4" />
-            New Project
+            New project
           </Button>
         </Link>
       </div>
@@ -55,8 +53,7 @@ export default async function ProjectsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {projects.map((project) => {
-            const allTasks = project.stages.flatMap((s) => s.tasks);
-            const progress = calculateProgress(allTasks);
+            const stats = getProjectStats(statsMap, project.id);
             return (
               <Link key={project.id} href={`/projects/${project.id}`}>
                 <Card className="h-full transition-colors hover:border-cyan-800/50">
@@ -79,10 +76,12 @@ export default async function ProjectsPage() {
                     )}
                     <div className="mt-4">
                       <div className="mb-1 flex justify-between text-xs text-slate-500">
-                        <span>{project.stages.length} stages · {allTasks.length} tasks</span>
-                        <span>{progress}%</span>
+                        <span>
+                          {stats.stageCount} stages · {stats.taskCount} tasks
+                        </span>
+                        <span>{stats.progress}%</span>
                       </div>
-                      <Progress value={progress} size="sm" />
+                      <Progress value={stats.progress} size="sm" />
                     </div>
                     {project.targetDate && (
                       <p className="mt-3 text-xs text-slate-500">

@@ -13,9 +13,9 @@ export default async function DashboardLayout({
 
   return (
     <NavigationPendingProvider>
-      <div className="flex min-h-screen bg-slate-950">
+      <div className="flex h-screen overflow-hidden bg-slate-950">
         <Sidebar userName={session.user.name ?? "User"} />
-        <main className="relative flex-1 overflow-auto">
+        <main className="relative min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-7xl p-6 lg:p-8">{children}</div>
         </main>
       </div>

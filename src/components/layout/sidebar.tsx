@@ -1,10 +1,10 @@
 "use client";
 
+import { memo, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
 import {
-  DollarSign,
+  Calculator,
   FolderKanban,
   Home,
   LayoutDashboard,
@@ -24,10 +24,10 @@ const navItems = [
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/team", label: "Team", icon: Users },
-  { href: "/revenue", label: "Revenue", icon: DollarSign },
+  { href: "/finance", label: "Finance & Accounting", icon: Calculator },
 ];
 
-export function Sidebar({ userName }: { userName: string }) {
+export const Sidebar = memo(function Sidebar({ userName }: { userName: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const { startNavigation } = useNavigationPending();
@@ -44,7 +44,7 @@ export function Sidebar({ userName }: { userName: string }) {
   }
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-950">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-950">
       <div className="flex items-center gap-3 border-b border-slate-800 px-5 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-600">
           <Workflow className="h-5 w-5 text-white" />
@@ -95,4 +95,4 @@ export function Sidebar({ userName }: { userName: string }) {
       </div>
     </aside>
   );
-}
+});

@@ -5,6 +5,10 @@ export type RevenueSourceRecord = {
   projectId: string | null;
   name: string;
   amount: number;
+  category: string | null;
+  description: string | null;
+  receivedDate: string | null;
+  notes: string | null;
 };
 
 function mapRow(row: Record<string, unknown>): RevenueSourceRecord {
@@ -13,12 +17,22 @@ function mapRow(row: Record<string, unknown>): RevenueSourceRecord {
     projectId: row.projectId != null ? String(row.projectId) : null,
     name: String(row.name),
     amount: Number(row.amount),
+    category: row.category != null ? String(row.category) : null,
+    description: row.description != null ? String(row.description) : null,
+    receivedDate:
+      row.receivedDate != null ? String(row.receivedDate) : null,
+    notes: row.notes != null ? String(row.notes) : null,
   };
 }
 
+const SELECT_COLUMNS = `
+  id, projectId, name, amount, category, description,
+  CAST(receivedDate AS TEXT) AS receivedDate, notes
+`;
+
 export async function listAllRevenueSources(): Promise<RevenueSourceRecord[]> {
   const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
-    `SELECT id, projectId, name, amount
+    `SELECT ${SELECT_COLUMNS}
      FROM RevenueSource
      ORDER BY createdAt ASC`,
   );
@@ -32,7 +46,7 @@ export async function listRevenueSourcesForProjects(
 
   const placeholders = projectIds.map(() => "?").join(", ");
   const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
-    `SELECT id, projectId, name, amount
+    `SELECT ${SELECT_COLUMNS}
      FROM RevenueSource
      WHERE projectId IN (${placeholders})
      ORDER BY createdAt ASC`,
@@ -52,22 +66,49 @@ export async function sumRevenueSourcesForProject(
   return Number(rows[0]?.total ?? 0);
 }
 
-export async function createRevenueSource(input: {
+export type CreateRevenueSourceInput = {
   projectId?: string | null;
   name: string;
   amount: number;
-}): Promise<RevenueSourceRecord> {
+  category?: string | null;
+  description?: string | null;
+  receivedDate?: string | null;
+  notes?: string | null;
+};
+
+export type UpdateRevenueSourceInput = {
+  name?: string;
+  amount?: number;
+  category?: string | null;
+  description?: string | null;
+  receivedDate?: string | null;
+  notes?: string | null;
+};
+
+export async function createRevenueSource(
+  input: CreateRevenueSourceInput,
+): Promise<RevenueSourceRecord> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const projectId = input.projectId ?? null;
+  const category = input.category?.trim() || null;
+  const description = input.description?.trim() || null;
+  const receivedDate = input.receivedDate?.trim() || null;
+  const notes = input.notes?.trim() || null;
 
   await prisma.$executeRawUnsafe(
-    `INSERT INTO RevenueSource (id, projectId, name, amount, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO RevenueSource (
+       id, projectId, name, amount, category, description, receivedDate, notes, createdAt, updatedAt
+     )
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     id,
     projectId,
     input.name,
     input.amount,
+    category,
+    description,
+    receivedDate,
+    notes,
     now,
     now,
   );
@@ -77,15 +118,19 @@ export async function createRevenueSource(input: {
     projectId,
     name: input.name,
     amount: input.amount,
+    category,
+    description,
+    receivedDate,
+    notes,
   };
 }
 
 export async function updateRevenueSource(
   id: string,
-  data: { name?: string; amount?: number },
+  data: UpdateRevenueSourceInput,
 ): Promise<RevenueSourceRecord | null> {
   const existingRows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
-    `SELECT id, projectId, name, amount FROM RevenueSource WHERE id = ? LIMIT 1`,
+    `SELECT ${SELECT_COLUMNS} FROM RevenueSource WHERE id = ? LIMIT 1`,
     id,
   );
   const existing = existingRows[0];
@@ -93,12 +138,42 @@ export async function updateRevenueSource(
 
   const name = data.name ?? String(existing.name);
   const amount = data.amount ?? Number(existing.amount);
+  const category =
+    data.category !== undefined
+      ? data.category?.trim() || null
+      : existing.category != null
+        ? String(existing.category)
+        : null;
+  const description =
+    data.description !== undefined
+      ? data.description?.trim() || null
+      : existing.description != null
+        ? String(existing.description)
+        : null;
+  const receivedDate =
+    data.receivedDate !== undefined
+      ? data.receivedDate?.trim() || null
+      : existing.receivedDate != null
+        ? String(existing.receivedDate)
+        : null;
+  const notes =
+    data.notes !== undefined
+      ? data.notes?.trim() || null
+      : existing.notes != null
+        ? String(existing.notes)
+        : null;
   const now = new Date().toISOString();
 
   await prisma.$executeRawUnsafe(
-    `UPDATE RevenueSource SET name = ?, amount = ?, updatedAt = ? WHERE id = ?`,
+    `UPDATE RevenueSource
+     SET name = ?, amount = ?, category = ?, description = ?, receivedDate = ?, notes = ?, updatedAt = ?
+     WHERE id = ?`,
     name,
     amount,
+    category,
+    description,
+    receivedDate,
+    notes,
     now,
     id,
   );
@@ -108,6 +183,10 @@ export async function updateRevenueSource(
     projectId: existing.projectId != null ? String(existing.projectId) : null,
     name,
     amount,
+    category,
+    description,
+    receivedDate,
+    notes,
   };
 }
 

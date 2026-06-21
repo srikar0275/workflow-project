@@ -58,14 +58,20 @@ Open [http://localhost:3000](http://localhost:3000)
 
 **Port 3000 in use:** Stop the old server (Ctrl+C) or open the URL shown in terminal (e.g. `http://localhost:3001`).
 
-**Manifest / 500 errors:** Clear cache and restart:
+**Manifest / 500 errors / full page reload loops:** Stop the dev server, then run a clean restart:
+
+```bash
+npm run dev:clean
+```
+
+Or manually:
 
 ```bash
 Remove-Item -Recurse -Force .next
 npm run dev
 ```
 
-**Slow compiling in dev:** Dev now uses Turbopack (faster). First visit to each page compiles once; later visits are cached. If Turbopack fails on Windows/OneDrive, use `npm run dev:webpack` instead.
+**Slow compiling in dev:** The first visit to each route compiles once; later visits should be faster. On Windows/OneDrive, avoid `dev:turbo` unless you have moved the repo outside OneDrive — use `npm run dev` (webpack). If you see `next.config.compiled.js` cache warnings, run `npm run dev:clean`.
 
 **Prisma schema changes:** Stop the dev server, then run `npx prisma generate` before `npm run dev`.
 

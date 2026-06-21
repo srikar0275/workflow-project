@@ -6,10 +6,19 @@ import { logActivity } from "@/lib/sync-status";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+const optionalText = z
+  .string()
+  .optional()
+  .transform((value) => (value?.trim() ? value.trim() : undefined));
+
 const createSchema = z.object({
   projectId: z.string().optional(),
-  name: z.string().min(1),
-  amount: z.number().nonnegative(),
+  name: z.string().min(1, "Source name is required"),
+  amount: z.number().nonnegative("Amount must be zero or greater"),
+  category: optionalText,
+  description: optionalText,
+  receivedDate: optionalText,
+  notes: optionalText,
 });
 
 export async function POST(request: Request) {
@@ -18,7 +27,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -28,27 +43,33 @@ export async function POST(request: Request) {
   if (projectId) {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
-      select: { id: true, name: true },
+      select: { id: true },
     });
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
   }
 
-  const source = await createRevenueSource(parsed.data);
+  try {
+    const source = await createRevenueSource(parsed.data);
 
-  if (projectId) {
-    await syncProjectRevenueFromSources(projectId);
+    if (projectId) {
+      await syncProjectRevenueFromSources(projectId);
+    }
+
+    await logActivity(
+      session.user.id,
+      `Added revenue source "${source.name}"`,
+      undefined,
+      projectId,
+    );
+
+    return NextResponse.json(source, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create revenue source:", error);
+    return NextResponse.json(
+      { error: "Failed to create revenue source. Please try again." },
+      { status: 500 },
+    );
   }
-
-  await logActivity(
-    session.user.id,
-    projectId
-      ? `Added revenue source "${source.name}"`
-      : `Added revenue source "${source.name}"`,
-    undefined,
-    projectId,
-  );
-
-  return NextResponse.json(source, { status: 201 });
 }
