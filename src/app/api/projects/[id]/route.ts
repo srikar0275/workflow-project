@@ -86,6 +86,7 @@ export async function PATCH(
     where: { id },
     data: {
       ...projectData,
+      revenueDate: revenueDate !== undefined ? revenueDate : undefined,
       startDate:
         projectData.startDate === null
           ? null
@@ -102,24 +103,6 @@ export async function PATCH(
     include: { stages: true },
   });
 
-  if (revenueDate !== undefined) {
-    const now = new Date().toISOString();
-    await prisma.$executeRawUnsafe(
-      `UPDATE Project SET revenueDate = ?, updatedAt = ? WHERE id = ?`,
-      revenueDate,
-      now,
-      id,
-    );
-  }
-
-  const revenueDateRows = await prisma.$queryRawUnsafe<
-    { revenueDate: string | null; updatedAt: string }[]
-  >(
-    `SELECT revenueDate, updatedAt FROM Project WHERE id = ? LIMIT 1`,
-    id,
-  );
-  const financeFields = revenueDateRows[0];
-
   await logActivity(
     session.user.id,
     `Updated project "${project.name}"`,
@@ -127,11 +110,7 @@ export async function PATCH(
     project.id,
   );
 
-  return NextResponse.json({
-    ...project,
-    revenueDate: financeFields?.revenueDate ?? null,
-    updatedAt: financeFields?.updatedAt ?? project.updatedAt,
-  });
+  return NextResponse.json(project);
 }
 
 export async function DELETE(

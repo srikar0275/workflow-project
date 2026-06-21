@@ -44,13 +44,10 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const existing = await prisma.$queryRawUnsafe<
-    { id: string; projectId: string | null; name: string }[]
-  >(
-    `SELECT id, projectId, name FROM RevenueSource WHERE id = ? LIMIT 1`,
-    id,
-  );
-  const row = existing[0];
+  const row = await prisma.revenueSource.findUnique({
+    where: { id },
+    select: { id: true, projectId: true, name: true },
+  });
   if (!row) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -84,13 +81,10 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  const existing = await prisma.$queryRawUnsafe<
-    { id: string; projectId: string | null; name: string }[]
-  >(
-    `SELECT id, projectId, name FROM RevenueSource WHERE id = ? LIMIT 1`,
-    id,
-  );
-  const row = existing[0];
+  const row = await prisma.revenueSource.findUnique({
+    where: { id },
+    select: { id: true, projectId: true, name: true },
+  });
   if (!row) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

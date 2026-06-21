@@ -11,23 +11,27 @@ export type FinanceProjectRecord = {
   updatedAt: string;
 };
 
-function mapRow(row: Record<string, unknown>): FinanceProjectRecord {
-  return {
-    id: String(row.id),
-    name: String(row.name),
-    client: row.client != null ? String(row.client) : null,
-    status: String(row.status) as ProjectStatus,
-    revenue: row.revenue != null ? Number(row.revenue) : null,
-    revenueDate: row.revenueDate != null ? String(row.revenueDate) : null,
-    updatedAt: String(row.updatedAt),
-  };
-}
-
 export async function listFinanceProjects(): Promise<FinanceProjectRecord[]> {
-  const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
-    `SELECT id, name, client, status, revenue, revenueDate, updatedAt
-     FROM Project
-     ORDER BY name ASC`,
-  );
-  return rows.map(mapRow);
+  const rows = await prisma.project.findMany({
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      client: true,
+      status: true,
+      revenue: true,
+      revenueDate: true,
+      updatedAt: true,
+    },
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    client: row.client,
+    status: row.status,
+    revenue: row.revenue,
+    revenueDate: row.revenueDate,
+    updatedAt: row.updatedAt.toISOString(),
+  }));
 }

@@ -7,24 +7,18 @@ export type ProjectStats = {
   progress: number;
 };
 
-type TaskCountRow = {
-  projectId: string;
-  status: string;
-  count: number;
-};
-
 export async function getProjectStatsMap(): Promise<Map<string, ProjectStats>> {
   const [stageRows, taskRows] = await Promise.all([
     prisma.stage.groupBy({
       by: ["projectId"],
       _count: { _all: true },
     }),
-    prisma.$queryRawUnsafe<TaskCountRow[]>(
-      `SELECT s.projectId AS projectId, t.status AS status, COUNT(*) AS count
-       FROM Task t
-       INNER JOIN Stage s ON t.stageId = s.id
-       GROUP BY s.projectId, t.status`,
-    ),
+    prisma.task.findMany({
+      select: {
+        status: true,
+        stage: { select: { projectId: true } },
+      },
+    }),
   ]);
 
   const map = new Map<string, ProjectStats>();
@@ -39,15 +33,15 @@ export async function getProjectStatsMap(): Promise<Map<string, ProjectStats>> {
   }
 
   for (const row of taskRows) {
-    const count = Number(row.count);
-    let stats = map.get(row.projectId);
+    const projectId = row.stage.projectId;
+    let stats = map.get(projectId);
     if (!stats) {
       stats = { stageCount: 0, taskCount: 0, doneCount: 0, progress: 0 };
-      map.set(row.projectId, stats);
+      map.set(projectId, stats);
     }
-    stats.taskCount += count;
+    stats.taskCount += 1;
     if (row.status === "DONE") {
-      stats.doneCount += count;
+      stats.doneCount += 1;
     }
   }
 

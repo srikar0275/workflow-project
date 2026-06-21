@@ -18,38 +18,35 @@ export type SalaryPaymentRecord = {
   expenseId: string | null;
 };
 
-function mapRow(row: Record<string, unknown>): SalaryPaymentRecord {
+function mapRow(payment: {
+  id: string;
+  userId: string;
+  monthKey: string;
+  amount: number;
+  status: "PAID" | "NOT_PAID";
+  paidDate: string | null;
+  expenseId: string | null;
+  user: { name: string };
+}): SalaryPaymentRecord {
   return {
-    id: String(row.id),
-    userId: String(row.userId),
-    userName: String(row.userName),
-    monthKey: String(row.monthKey),
-    amount: Number(row.amount),
-    status: row.status === "PAID" ? "PAID" : "NOT_PAID",
-    paidDate: row.paidDate != null ? String(row.paidDate) : null,
-    expenseId: row.expenseId != null ? String(row.expenseId) : null,
+    id: payment.id,
+    userId: payment.userId,
+    userName: payment.user.name,
+    monthKey: payment.monthKey,
+    amount: payment.amount,
+    status: payment.status,
+    paidDate: payment.paidDate,
+    expenseId: payment.expenseId,
   };
 }
 
-const SELECT_WITH_USER = `
-  SELECT
-    sp.id,
-    sp.userId,
-    u.name AS userName,
-    sp.monthKey,
-    sp.amount,
-    sp.status,
-    CAST(sp.paidDate AS TEXT) AS paidDate,
-    sp.expenseId
-  FROM SalaryPayment sp
-  INNER JOIN User u ON u.id = sp.userId
-`;
+const paymentInclude = { user: { select: { name: true } } } as const;
 
 export async function listAllSalaryPayments(): Promise<SalaryPaymentRecord[]> {
-  const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
-    `${SELECT_WITH_USER}
-     ORDER BY sp.monthKey DESC, u.name ASC`,
-  );
+  const rows = await prisma.salaryPayment.findMany({
+    include: paymentInclude,
+    orderBy: [{ monthKey: "desc" }, { user: { name: "asc" } }],
+  });
   return rows.map(mapRow);
 }
 
@@ -57,27 +54,20 @@ async function findSalaryPaymentByUserMonth(
   userId: string,
   monthKey: string,
 ): Promise<SalaryPaymentRecord | null> {
-  const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
-    `${SELECT_WITH_USER}
-     WHERE sp.userId = ? AND sp.monthKey = ?
-     LIMIT 1`,
-    userId,
-    monthKey,
-  );
-  const row = rows[0];
+  const row = await prisma.salaryPayment.findUnique({
+    where: { userId_monthKey: { userId, monthKey } },
+    include: paymentInclude,
+  });
   return row ? mapRow(row) : null;
 }
 
 async function findSalaryPaymentById(
   paymentId: string,
 ): Promise<SalaryPaymentRecord | null> {
-  const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
-    `${SELECT_WITH_USER}
-     WHERE sp.id = ?
-     LIMIT 1`,
-    paymentId,
-  );
-  const row = rows[0];
+  const row = await prisma.salaryPayment.findUnique({
+    where: { id: paymentId },
+    include: paymentInclude,
+  });
   return row ? mapRow(row) : null;
 }
 
@@ -90,57 +80,47 @@ async function saveSalaryPaymentRow(input: {
   paidDate: string | null;
   expenseId: string | null;
 }): Promise<SalaryPaymentRecord> {
-  const now = new Date().toISOString();
   const existing = await findSalaryPaymentByUserMonth(input.userId, input.monthKey);
 
   if (existing) {
-    await prisma.$executeRawUnsafe(
-      `UPDATE SalaryPayment
-       SET amount = ?, status = ?, paidDate = ?, expenseId = ?, updatedAt = ?
-       WHERE id = ?`,
-      input.amount,
-      input.status,
-      input.paidDate,
-      input.expenseId,
-      now,
-      existing.id,
-    );
-    const saved = await findSalaryPaymentById(existing.id);
-    if (!saved) throw new Error("Failed to load updated salary payment");
-    return saved;
+    const saved = await prisma.salaryPayment.update({
+      where: { id: existing.id },
+      data: {
+        amount: input.amount,
+        status: input.status,
+        paidDate: input.paidDate,
+        expenseId: input.expenseId,
+      },
+      include: paymentInclude,
+    });
+    return mapRow(saved);
   }
 
-  const id = input.id ?? crypto.randomUUID();
-  await prisma.$executeRawUnsafe(
-    `INSERT INTO SalaryPayment (
-       id, userId, monthKey, amount, status, paidDate, expenseId, createdAt, updatedAt
-     )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    id,
-    input.userId,
-    input.monthKey,
-    input.amount,
-    input.status,
-    input.paidDate,
-    input.expenseId,
-    now,
-    now,
-  );
+  const saved = await prisma.salaryPayment.create({
+    data: {
+      id: input.id,
+      userId: input.userId,
+      monthKey: input.monthKey,
+      amount: input.amount,
+      status: input.status,
+      paidDate: input.paidDate,
+      expenseId: input.expenseId,
+    },
+    include: paymentInclude,
+  });
 
-  const saved = await findSalaryPaymentById(id);
-  if (!saved) throw new Error("Failed to load created salary payment");
-  return saved;
+  return mapRow(saved);
 }
 
 export async function clearSalaryPaymentExpenseLink(expenseId: string) {
-  const now = new Date().toISOString();
-  await prisma.$executeRawUnsafe(
-    `UPDATE SalaryPayment
-     SET expenseId = NULL, status = 'NOT_PAID', paidDate = NULL, updatedAt = ?
-     WHERE expenseId = ?`,
-    now,
-    expenseId,
-  );
+  await prisma.salaryPayment.updateMany({
+    where: { expenseId },
+    data: {
+      expenseId: null,
+      status: "NOT_PAID",
+      paidDate: null,
+    },
+  });
 }
 
 type UpsertSalaryEntry = {
@@ -168,11 +148,10 @@ export async function upsertSalaryPayments(input: {
   for (const entry of entries) {
     if (!Number.isFinite(entry.amount) || entry.amount <= 0) continue;
 
-    const users = await prisma.$queryRawUnsafe<{ id: string; name: string }[]>(
-      `SELECT id, name FROM User WHERE id = ? LIMIT 1`,
-      entry.userId,
-    );
-    const user = users[0];
+    const user = await prisma.user.findUnique({
+      where: { id: entry.userId },
+      select: { id: true, name: true },
+    });
     if (!user) continue;
 
     const existing = await findSalaryPaymentByUserMonth(entry.userId, monthKey);
