@@ -84,7 +84,9 @@ async function upsertEnv(projectId, key, value) {
 async function main() {
   const projects = await vercel("/v9/projects");
   const project = projects.projects?.find(
-    (item) => item.name === PROJECT_NAME || item.name.includes("workflow-project"),
+    (item) => item.name === PROJECT_NAME,
+  ) ?? projects.projects?.find(
+    (item) => item.name.includes("workflow-project"),
   );
 
   if (!project) {
