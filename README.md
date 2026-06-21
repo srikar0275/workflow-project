@@ -1,6 +1,6 @@
-# Recursion Workflow Hub
+# Ritora Technologies
 
-Internal project workflow management platform for [Recursion Technologies](https://recursiontechonologies.netlify.app/). Track projects, stages, tasks, and team assignments in one place.
+Internal project workflow management platform for Ritora Technologies. Track projects, stages, tasks, and team assignments in one place.
 
 ## Features
 
@@ -39,9 +39,9 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Email | Password | Role |
 |-------|----------|------|
-| admin@recursion.tech | admin123 | Admin |
-| pm@recursion.tech | dev123 | Project Manager |
-| backend.dev@recursion.tech | dev123 | Backend Developer |
+| admin@ritora.tech | admin123 | Admin |
+| pm@ritora.tech | dev123 | Project Manager |
+| backend.dev@ritora.tech | dev123 | Backend Developer |
 
 ## Features overview
 
@@ -126,4 +126,4 @@ When creating a project, choose a template:
 
 ## License
 
-Private — Recursion Technologies
+Private — Ritora Technologies

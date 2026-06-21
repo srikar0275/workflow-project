@@ -50,8 +50,8 @@ export const Sidebar = memo(function Sidebar({ userName }: { userName: string })
           <Workflow className="h-5 w-5 text-white" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white">Recursion</p>
-          <p className="text-xs text-slate-400">Workflow Hub</p>
+          <p className="text-sm font-semibold text-white">Ritora</p>
+          <p className="text-xs text-slate-400">Technologies</p>
         </div>
       </div>
 

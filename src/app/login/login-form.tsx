@@ -44,7 +44,7 @@ export default function LoginForm() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-600">
             <Workflow className="h-6 w-6 text-white" />
           </div>
-          <CardTitle>Recursion Workflow Hub</CardTitle>
+          <CardTitle>Ritora Technologies</CardTitle>
           <p className="text-sm text-slate-400">
             Sign in to manage projects, stages, and tasks
           </p>
@@ -57,7 +57,7 @@ export default function LoginForm() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@recursion.tech"
+                placeholder="admin@ritora.tech"
                 required
               />
             </div>
@@ -79,7 +79,7 @@ export default function LoginForm() {
             </Button>
           </form>
           <p className="mt-4 text-center text-xs text-slate-500">
-            Demo: admin@recursion.tech / admin123
+            Demo: admin@ritora.tech / admin123
           </p>
         </CardContent>
       </Card>

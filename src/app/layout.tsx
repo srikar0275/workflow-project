@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Recursion Workflow Hub",
+  title: "Ritora Technologies",
   description:
-    "Project workflow management for Recursion Technologies — track stages, tasks, and team progress.",
+    "Project workflow management for Ritora Technologies — track stages, tasks, and team progress.",
 };
 
 export default function RootLayout({

@@ -16,7 +16,7 @@ export default async function HomePage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-600">
               <Workflow className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold">Recursion Technologies</span>
+            <span className="text-lg font-semibold">Ritora Technologies</span>
           </div>
           {isLoggedIn && (
             <Link href="/dashboard">
@@ -30,7 +30,7 @@ export default async function HomePage() {
 
         <div className="mt-20 max-w-2xl">
           <p className="text-sm font-medium uppercase tracking-wider text-cyan-400">
-            Workflow Hub
+            Project workflow
           </p>
           <h1 className="mt-3 text-4xl font-bold leading-tight sm:text-5xl">
             Manage projects, stages & tasks in one place

@@ -7,11 +7,11 @@ async function main() {
   const password = await hash("admin123", 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: "admin@recursion.tech" },
+    where: { email: "admin@ritora.tech" },
     update: {},
     create: {
       name: "Admin User",
-      email: "admin@recursion.tech",
+      email: "admin@ritora.tech",
       password,
       role: "ADMIN",
       devRole: "BACKEND",
@@ -20,55 +20,55 @@ async function main() {
 
   const team = await Promise.all([
     prisma.user.upsert({
-      where: { email: "app.dev@recursion.tech" },
+      where: { email: "app.dev@ritora.tech" },
       update: {},
       create: {
         name: "App Developer",
-        email: "app.dev@recursion.tech",
+        email: "app.dev@ritora.tech",
         password: await hash("dev123", 10),
         role: "DEVELOPER",
         devRole: "APP",
       },
     }),
     prisma.user.upsert({
-      where: { email: "backend.dev@recursion.tech" },
+      where: { email: "backend.dev@ritora.tech" },
       update: {},
       create: {
         name: "Backend Developer",
-        email: "backend.dev@recursion.tech",
+        email: "backend.dev@ritora.tech",
         password: await hash("dev123", 10),
         role: "DEVELOPER",
         devRole: "BACKEND",
       },
     }),
     prisma.user.upsert({
-      where: { email: "frontend.dev@recursion.tech" },
+      where: { email: "frontend.dev@ritora.tech" },
       update: {},
       create: {
         name: "Frontend Developer",
-        email: "frontend.dev@recursion.tech",
+        email: "frontend.dev@ritora.tech",
         password: await hash("dev123", 10),
         role: "DEVELOPER",
         devRole: "FRONTEND",
       },
     }),
     prisma.user.upsert({
-      where: { email: "ai.dev@recursion.tech" },
+      where: { email: "ai.dev@ritora.tech" },
       update: {},
       create: {
         name: "AI Developer",
-        email: "ai.dev@recursion.tech",
+        email: "ai.dev@ritora.tech",
         password: await hash("dev123", 10),
         role: "DEVELOPER",
         devRole: "AI",
       },
     }),
     prisma.user.upsert({
-      where: { email: "pm@recursion.tech" },
+      where: { email: "pm@ritora.tech" },
       update: {},
       create: {
         name: "Project Manager",
-        email: "pm@recursion.tech",
+        email: "pm@ritora.tech",
         password: await hash("dev123", 10),
         role: "PROJECT_MANAGER",
       },
@@ -257,7 +257,7 @@ async function main() {
   }
 
   console.log("Seed completed.");
-  console.log("Login: admin@recursion.tech / admin123");
+  console.log("Login: admin@ritora.tech / admin123");
 }
 
 main()
